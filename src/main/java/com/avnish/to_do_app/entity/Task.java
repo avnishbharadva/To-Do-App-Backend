@@ -1,5 +1,7 @@
 package com.avnish.to_do_app.entity;
 
+import com.fasterxml.jackson.annotation.JsonFilter;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 
@@ -9,6 +11,8 @@ import java.util.List;
 import java.util.Set;
 
 @Entity
+//@JsonIgnoreProperties(value = {"id","atCreated"})
+@JsonFilter("TaskFilter")
 public class Task {
 
     @Id
@@ -19,7 +23,7 @@ public class Task {
     private boolean isCompleted;
     private LocalDateTime atCreated;
 
-    @ManyToMany(cascade = CascadeType.ALL,fetch = FetchType.LAZY)
+    @ManyToMany(cascade = CascadeType.ALL,fetch = FetchType.EAGER)
     @JoinTable(name = "task_category_table",
             joinColumns = {
                 @JoinColumn(name = "task_id",referencedColumnName = "id")

@@ -4,6 +4,7 @@ import com.avnish.to_do_app.entity.Category;
 import com.avnish.to_do_app.entity.CategoryDTO;
 import com.avnish.to_do_app.entity.Task;
 import com.avnish.to_do_app.entity.TaskDTO;
+import com.avnish.to_do_app.mapper.TaskMapper;
 import com.avnish.to_do_app.repo.CategoryRepo;
 import com.avnish.to_do_app.repo.TaskRepo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -22,17 +24,19 @@ public class TaskService {
 
     private final TaskRepo taskRepo;
     private final CategoryRepo categoryRepo;
+    private final TaskMapper taskMapper;
 
     @Autowired
-    public TaskService(TaskRepo taskRepo,CategoryRepo categoryRepo){
+    public TaskService(TaskRepo taskRepo,CategoryRepo categoryRepo,TaskMapper taskMapper){
         this.taskRepo = taskRepo;
         this.categoryRepo = categoryRepo;
+        this.taskMapper = taskMapper;
     }
 
 
 
-    public ResponseEntity<List<Task>> allTask(){
-        return new ResponseEntity<>(taskRepo.findAll(),HttpStatus.OK);
+    public List<Task> allTask(){
+        return taskRepo.findAll();
     }
 
     @Transactional
@@ -79,11 +83,13 @@ public class TaskService {
     }
 
     @Transactional
-    public ResponseEntity<Task> addTask(TaskDTO taskDTO) {
-        Task task = new Task();
-        task.setTitle(taskDTO.getTitle());
-        task.setDescription(taskDTO.getDescription());
-        task.setCompleted(taskDTO.isCompleted());
+    public Task addTask(TaskDTO taskDTO) {
+//        Task task = new Task();
+//        task.setTitle(taskDTO.getTitle());
+//        task.setDescription(taskDTO.getDescription());
+//        task.setCompleted(taskDTO.isCompleted());
+
+        Task task = taskMapper.taskDTOtoTask(taskDTO);
 
         Set<Category> categories = taskDTO.getCategories()
                 .stream()
@@ -97,7 +103,7 @@ public class TaskService {
 
         task.setCategories(categories);
 
-        return ResponseEntity.ok(taskRepo.save(task));
+        return taskRepo.save(task);
     }
 
     @Transactional
@@ -117,6 +123,22 @@ public class TaskService {
             return false;
         }
         return false;
+    }
+
+    public ResponseEntity<Set<Task>> getTaskByCategory(String category) {
+        Optional<Category> byCategory = categoryRepo.findByCategory(category);
+        if(byCategory.isPresent()){
+            Category category1 = byCategory.get();
+            return ResponseEntity.ok(category1.getTasks());
+        }
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+    }
+
+    public List<String> getTitles() {
+        List<Task> allTasks = taskRepo.findAll();
+//        List<String> titles = new ArrayList<>();
+//        allTasks.forEach(task -> titles.add(task.getTitle()));
+        return allTasks.stream().map(Task::getTitle).toList();
     }
 
 //    @Transactional
